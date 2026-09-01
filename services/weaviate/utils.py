@@ -59,5 +59,15 @@ def format_docs(docs: list[dict]) -> str:
 
     return "\n\n---\n\n".join(format_doc(doc) for doc in docs)
 
+def format_relationship(properties: dict) -> str:
+    return (
+        f"{properties.get('source_name')} "
+        f"--{properties.get('relationship_type')}--> "
+        f"{properties.get('target_name')} "
+        f"at {properties.get('file_path')}:"
+        f"{properties.get('line_number')} "
+        f"(resolved={properties.get('resolved')})"
+    )
+
 
 url = r"C:\New folder (2)\multi-agent-procurement-system"

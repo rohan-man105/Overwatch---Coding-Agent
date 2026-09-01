@@ -6,7 +6,7 @@ from agents.stream_events import (
     RunItemStreamEvent,
 )
 from openai.types.responses.response_text_delta_event import ResponseTextDeltaEvent
-from services.agentservices.orchestrator import orchestrator
+from services.agentservices.agents.orchestrator import orchestrator
 import sys
 
 

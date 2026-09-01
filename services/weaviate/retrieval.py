@@ -1,4 +1,4 @@
-from services.weaviate.utils import format_doc, format_docs, get_client, get_model
+from services.weaviate.utils import format_doc, format_docs, get_client, get_model,format_relationship
 from weaviate.classes.query import Filter
 import os
 from agents import function_tool
@@ -113,3 +113,67 @@ def grasp_codebase(limit:int=200):
         })
 
     return format_docs(symbols)
+
+@function_tool
+def get_callers(symbol_name:str , limit:int=10 ):
+    """Find functions that call a given function"""
+
+    client = get_client()
+    collection = client.collections.use("CodeRelationship")
+
+    result = collection.query.fetch_objects(
+        filters=(
+            Filter.by_property("target_name").equal(symbol_name)
+            & Filter.by_property("relationship_type").equal("calls")
+        ),
+        limit=limit
+    )
+
+    return "\n".join(
+    format_relationship(obj.properties)
+    for obj in result.objects
+    )
+
+@function_tool
+def get_callee(symbol_name:str , limit:int=10):
+    """Finding which function does the caller function called"""
+
+    client = get_client()
+    collection = client.collections.use("CodeRelationship")
+
+    result = collection.query.fetch_objects(
+        filters=(
+            Filter.by_property("source_name").equal(symbol_name)
+            & Filter.by_property("relationship_type").equal("calls")
+        ),
+        limit=limit
+    )
+
+    return "\n".join(
+    format_relationship(obj.properties)
+    for obj in result.objects
+    )
+
+@function_tool
+def find_importers(module_name:str, limit:int=10):
+    """Finding the imported accessories by a particular module"""
+
+    client = get_client()
+    collection = client.collections.use("CodeRelationship")
+
+    result = collection.query.fetch_objects(
+        filters=(
+            Filter.by_property("target_name").equal(module_name)
+            & Filter.by_property("relationship_type").equal("imports")
+        ),
+        limit=limit
+    )
+
+    return "\n".join(
+    format_relationship(obj.properties)
+    for obj in result.objects
+    )
+
+
+
+    
