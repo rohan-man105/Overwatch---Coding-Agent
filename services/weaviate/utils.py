@@ -60,4 +60,4 @@ def format_docs(docs: list[dict]) -> str:
     return "\n\n---\n\n".join(format_doc(doc) for doc in docs)
 
 
-url = "/home/ubox48/GenAI"
+url = r"C:\New folder (2)\multi-agent-procurement-system"
