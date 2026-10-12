@@ -352,6 +352,14 @@ For the complete project:
 pytest
 ```
 
+The selected repository path is already configured in the verification tool; do
+not ask for or provide a project path. The tool accepts only these command forms:
+
+```text
+python -m py_compile path/to/changed_file.py
+pytest [options] [path ...]
+```
+
 Do not run commands that are not approved by the verification tool.
 
 ## Interpretation rules

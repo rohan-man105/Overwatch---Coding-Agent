@@ -60,13 +60,28 @@ def format_docs(docs: list[dict]) -> str:
     return "\n\n---\n\n".join(format_doc(doc) for doc in docs)
 
 def format_relationship(properties: dict) -> str:
+    source = properties.get("source_name") or "Unknown source"
+    target = properties.get("target_name") or "Unknown target"
+    relation = properties.get("relationship_type") or "unknown"
+    file_path = properties.get("file_path") or "Unknown file"
+    line = properties.get("line_number") or "Unknown line"
+    resolved = properties.get("resolved", False)
+
     return (
-        f"{properties.get('source_name')} "
-        f"--{properties.get('relationship_type')}--> "
-        f"{properties.get('target_name')} "
-        f"at {properties.get('file_path')}:"
-        f"{properties.get('line_number')} "
-        f"(resolved={properties.get('resolved')})"
+        f"{source} --{relation}--> {target}\n"
+        f"File: {file_path}\n"
+        f"Line: {line}\n"
+        f"Resolved: {resolved}"
+    )
+
+
+def format_relationships(relationships: list[dict]) -> str:
+    if not relationships:
+        return "No relationships found."
+
+    return "\n\n---\n\n".join(
+        format_relationship(relationship)
+        for relationship in relationships
     )
 
 

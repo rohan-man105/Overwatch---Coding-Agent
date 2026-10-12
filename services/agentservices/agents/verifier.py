@@ -13,6 +13,7 @@ class VerificationResult(BaseModel):
         "failed",
         "skipped",
         "unavailable",
+        "timed_out",
     ]
     return_code: int | None = None
     stdout: str = ""
@@ -40,7 +41,8 @@ def verify(orch_agent):
         instructions=VERIFIER_INSTRUCTIONS,
         model=open_model,
         handoff_description=(
-        "Hand off to Verifier when the user asks whether a proposed fix works..."
+            "Hand off to Verifier to compile changed Python files or run approved "
+            "pytest checks, then report the actual result."
         ),
         handoffs=[orch_agent],
         tools=[run_verification],

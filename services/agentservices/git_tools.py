@@ -1,9 +1,32 @@
 import subprocess
 from pathlib import Path
 
+from agents import function_tool
+from services.weaviate import utils
 
-def run_git(args: list[str], project_path: str):
-    project = Path(project_path).resolve()
+
+def _project_root() -> Path:
+    project = Path(utils.url).expanduser().resolve()
+    if not project.is_dir():
+        raise ValueError(f"Selected project does not exist: {project}")
+    return project
+
+
+def _project_file(file_path: str, project: Path) -> str:
+    candidate = Path(file_path)
+    if candidate.is_absolute():
+        candidate = candidate.resolve()
+    else:
+        candidate = (project / candidate).resolve()
+
+    try:
+        return str(candidate.relative_to(project))
+    except ValueError as error:
+        raise ValueError("File path must be inside the selected project") from error
+
+
+def run_git(args: list[str]):
+    project = _project_root()
 
     result = subprocess.run(
         ["git", *args],
@@ -21,15 +44,19 @@ def run_git(args: list[str], project_path: str):
     }
 
 
-def file_history(file_path: str, project_path: str):
+@function_tool()
+def file_history(file_path: str) -> dict:
+    """Show Git commit history for one file in the selected repository."""
+    project = _project_root()
     return run_git(
-        ["log", "--oneline", "--follow", "--", file_path],
-        project_path,
+        ["log", "--oneline", "--follow", "--", _project_file(file_path, project)],
     )
 
 
-def file_blame(file_path: str, project_path: str):
+@function_tool()
+def file_blame(file_path: str) -> dict:
+    """Show Git blame for one file in the selected repository."""
+    project = _project_root()
     return run_git(
-        ["blame", "--", file_path],
-        project_path,
+        ["blame", "--", _project_file(file_path, project)],
     )

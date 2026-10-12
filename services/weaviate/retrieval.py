@@ -1,13 +1,30 @@
-from services.weaviate.utils import format_doc, format_docs, get_client, get_model,format_relationship
+from services.weaviate.utils import (
+    format_doc,
+    format_docs,
+    format_relationships,
+    get_client,
+    get_model,
+)
 from weaviate.classes.query import Filter
 import os
 from agents import function_tool
 from services.weaviate import utils 
+from services.weaviate.load import repository_id
+
+
+
+def current_repository_id() -> str:
+    return repository_id(utils.url)
 
 
 def get_codebase_collection():
     client = get_client()
     return client.collections.use("CodeBase")
+
+def repository_filter():
+    return Filter.by_property(
+        "repository_id"
+    ).equal(current_repository_id())
 
 
 # Semantic Search for Knowing about a function or class 
@@ -23,7 +40,7 @@ def grasp_func(user_query:str , limit:int=3):
         vector=query_vector,
         alpha=0.7,
         limit=limit,
-        #return_metadata
+        filters=repository_filter(),
     )
 
     return format_docs([obj.properties for obj in results.objects])
@@ -36,7 +53,9 @@ def search_func(func_name:str,limit: int=2):
     collection = get_codebase_collection()
 
     results = collection.query.fetch_objects(
-        filters= Filter.by_property("name").equal(func_name),
+        filters= (
+            repository_filter()
+            & Filter.by_property("name").equal(func_name)),
         limit=limit
     )
 
@@ -52,7 +71,9 @@ def grasp_file(file_path:str,limit:int=50):
     collection = get_codebase_collection()
 
     results = collection.query.fetch_objects(
-        filters=Filter.by_property("file_path").equal(file_path),
+        filters=(
+            repository_filter()
+            & Filter.by_property("file_path").equal(file_path)),
         limit=limit
     )
 
@@ -65,7 +86,6 @@ def grasp_file(file_path:str,limit:int=50):
 # Understanding project structure
 @function_tool()
 def get_project_structure( depth: int = 3):
-    
     SKIP_DIRS = {'__pycache__', '.git', '.venv', 'venv', 'node_modules', '.idea'}
     tree = []
     root_path = os.path.abspath(utils.url) 
@@ -96,6 +116,7 @@ def grasp_codebase(limit:int=200):
     collection = get_codebase_collection()
 
     results = collection.query.fetch_objects(
+        filters=repository_filter(),
         limit=limit
     )
 
@@ -114,7 +135,7 @@ def grasp_codebase(limit:int=200):
 
     return format_docs(symbols)
 
-@function_tool
+@function_tool()
 def get_callers(symbol_name:str , limit:int=10 ):
     """Find functions that call a given function"""
 
@@ -123,38 +144,37 @@ def get_callers(symbol_name:str , limit:int=10 ):
 
     result = collection.query.fetch_objects(
         filters=(
-            Filter.by_property("target_name").equal(symbol_name)
+            repository_filter()
+            & Filter.by_property("target_name").equal(symbol_name)
             & Filter.by_property("relationship_type").equal("calls")
         ),
         limit=limit
     )
 
-    return "\n".join(
-    format_relationship(obj.properties)
-    for obj in result.objects
-    )
+    return format_relationships([obj.properties for obj in result.objects])
 
-@function_tool
-def get_callee(symbol_name:str , limit:int=10):
-    """Finding which function does the caller function called"""
+@function_tool()
+def get_callee(symbol_name: str, limit: int = 10):
+    """Find functions called by a given function."""
 
     client = get_client()
     collection = client.collections.use("CodeRelationship")
 
     result = collection.query.fetch_objects(
         filters=(
-            Filter.by_property("source_name").equal(symbol_name)
+            repository_filter()
+            & Filter.by_property("source_name").equal(symbol_name)
             & Filter.by_property("relationship_type").equal("calls")
         ),
-        limit=limit
+        limit=limit,
     )
 
-    return "\n".join(
-    format_relationship(obj.properties)
-    for obj in result.objects
-    )
+    if not result.objects:
+        return f"No callees found for {symbol_name}."
 
-@function_tool
+    return format_relationships([obj.properties for obj in result.objects])
+
+@function_tool()
 def find_importers(module_name:str, limit:int=10):
     """Finding the imported accessories by a particular module"""
 
@@ -163,16 +183,14 @@ def find_importers(module_name:str, limit:int=10):
 
     result = collection.query.fetch_objects(
         filters=(
-            Filter.by_property("target_name").equal(module_name)
+            repository_filter()
+            & Filter.by_property("target_name").equal(module_name)
             & Filter.by_property("relationship_type").equal("imports")
         ),
         limit=limit
     )
 
-    return "\n".join(
-    format_relationship(obj.properties)
-    for obj in result.objects
-    )
+    return format_relationships([obj.properties for obj in result.objects])
 
 
 
