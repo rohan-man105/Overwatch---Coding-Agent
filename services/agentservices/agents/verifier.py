@@ -46,7 +46,7 @@ def verify(orch_agent):
         ),
         handoffs=[orch_agent],
         tools=[run_verification],
-        output_type=VerifierOutput
+        # output_type=VerifierOutput
     )
 
     return ver

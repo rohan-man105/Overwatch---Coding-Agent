@@ -15,7 +15,7 @@ open_client = AsyncOpenAI(
 )
 
 open_model = OpenAIChatCompletionsModel(
-    model="nvidia/nemotron-3-super-120b-a12b",
+    model="nvidia/nemotron-3.5-bolt-e4b",
     openai_client=open_client
 )
 
